@@ -1,0 +1,80 @@
+services:
+  eazybytes-rabbit-mq:
+    image: "maleeshasa/eazybytes-rabbit-mq:v2"
+    hostname: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: rabitmq-diagnostics check_port_connectivity
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+    extends:
+      file: common-config.yml
+      service: network-deploy-service
+
+  eazybytes-config-server:
+    image: "maleeshasa/eazybytes-config-server:v2"
+    container_name: eazybytes-config-server-ms
+    ports:
+      - "8071:8071"
+    depends_on:
+      eazybytes-rabbit-mq:
+        condition: service_healthy
+    healthcheck:
+      test: "curl --fail --silent localhost:8071/actuator/health/readiness | grep UP || exit 1"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    extends:
+      file: common-config.yml
+      service: microservice-base-config
+
+  eazybytes-accounts:
+    image: "maleeshasa/eazybytes-accounts:v2"
+    container_name: eazybytes-accounts-ms
+    ports:
+      - "8080:8080"
+    depends_on:
+      eazybytes-config-server:
+        condition: service_healthy
+    environment:
+      SPRING_APPLICATION_NAME: "accounts"
+    extends:
+      file: common-config.yml
+      service: microservice-base-config
+
+  eazybytes-cards:
+    image: "maleeshasa/easybytes-cards:v2"
+    container_name: eazybytes-cards-ms
+    ports:
+      - "8090:8090"
+    depends_on:
+      eazybytes-config-server:
+        condition: service_healthy
+    environment:
+      SPRING_APPLICATION_NAME: "cards"
+    extends:
+      file: common-config.yml
+      service: microservice-base-config
+
+  eazybytes-loans:
+    image: "maleeshasa/eazybytes-loans:v2"
+    container_name: eazybytes-loans-ms
+    ports:
+      - "9090:9090"
+    depends_on:
+      eazybytes-config-server:
+        condition: service_healthy
+    environment:
+      SPRING_APPLICATION_NAME: "loans"
+    extends:
+      file: common-config.yml
+      service: microservice-base-config
+
+networks:
+  eazybytes-network:
+    driver: bridge
