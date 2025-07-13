@@ -2,6 +2,7 @@ services:
   network-deploy-service:
     networks:
       - eazybytes-network
+      
   microservice-base-config:
     extends:
       service: network-deploy-service
@@ -12,8 +13,27 @@ services:
     environment:
       SPRING_RABBITMQ_HOST: "rabbitmq"
       SPRING_PROFILES_ACTIVE: default
-  config-server-base-config:
+  
+  eurekaserver-base-config:
+    depends_on:
+      eazybytes-config-server:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: default
+      SPRING_CONFIG_IMPORT: http://eazybytes-config-server:8071/
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eazybytes-eurekaserver:8070/eureka/
+  
+  microservice-configserver-config:
     extends:
       service: microservice-base-config
+    depends_on:
+      eazybytes-config-server:
+        condition: service_healthy
+      eazybytes-eurekaserver:
+        condition: service_healthy
     environment:
-      SPRING_CONFIG_IMPORT: configserver:http://eazybytes-config-server:8071/
+      SPRING_PROFILES_ACTIVE: default
+      SPRING_CONFIG_IMPORT: http://eazybytes-config-server:8071/
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eazybytes-eurekaserver:8070/eureka/
+  
+  
