@@ -13,7 +13,7 @@ services:
       start_period: 5s
 
   eazybytes-config-server:
-    image: "maleeshasa/eazybytes-configserver:v3"
+    image: "maleeshasa/eazybytes-configserver:v4"
     container_name: eazybytes-config-server
     ports:
       - "8071:8071"
@@ -32,7 +32,7 @@ services:
       SPRING_PROFILES_ACTIVE: default
 
   eazybytes-eurekaserver:
-    image: "maleeshasa/eazybytes-eurekaserver:v3"
+    image: "maleeshasa/eazybytes-eurekaserver:v4"
     container_name: eazybytes-eurekaserver
     ports:
       - "8070:8070"
@@ -53,32 +53,18 @@ services:
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eazybytes-eurekaserver:8070/eureka/
       EUREKA_INSTANCE_HOSTNAME: eazybytes-eurekaserver
       SPRING_RABBITMQ_HOST: eazybytes-rabbitmq
-      SPRING_PROFILES_ACTIVE: native
       
   eazybytes-accounts:
-    image: "maleeshasa/eazybytes-accounts:v3"
+    image: "maleeshasa/eazybytes-accounts:v4"
     container_name: eazybytes-accounts
     ports:
       - "8080:8080"
-    depends_on:
-      eazybytes-rabbitmq:
-        condition: service_healthy
-      eazybytes-eurekaserver:
-        condition: service_healthy
-      eazybytes-config-server:
-        condition: service_healthy
-    environment:
-      SPRING_PROFILES_ACTIVE: prod
-      SPRING_APPLICATION_NAME: accounts
-      CONFIG_SERVER_URL: http://eazybytes-config-server:8071/
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eazybytes-eurekaserver:8070/eureka/
-      SPRING_RABBITMQ_HOST: eazybytes-rabbitmq
-
-  eazybytes-accounts_1:
-    image: "maleeshasa/eazybytes-accounts:v3"
-    container_name: eazybytes-accounts_1
-    ports:
-      - "8081:8080"
+    healthcheck:
+      test: "curl --fail --silent localhost:8080/actuator/health/readiness | grep UP || exit 1"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
     depends_on:
       eazybytes-rabbitmq:
         condition: service_healthy
@@ -94,10 +80,16 @@ services:
       SPRING_RABBITMQ_HOST: eazybytes-rabbitmq
       
   eazybytes-loans:
-    image: "maleeshasa/eazybytes-loans:v3"
+    image: "maleeshasa/eazybytes-loans:v4"
     container_name: eazybytes-loans
     ports:
       - "9091:9091"
+    healthcheck:
+      test: "curl --fail --silent localhost:9091/actuator/health/readiness | grep UP || exit 1"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
     depends_on:
       eazybytes-rabbitmq:
         condition: service_healthy
@@ -113,10 +105,16 @@ services:
       SPRING_RABBITMQ_HOST: eazybytes-rabbitmq
 
   eazybytes-cards:
-    image: "maleeshasa/easybytes-cards:v3"
+    image: "maleeshasa/easybytes-cards:v4"
     container_name: eazybytes-cards
     ports:
       - "8090:8090"
+    healthcheck:
+      test: "curl --fail --silent localhost:8090/actuator/health/readiness | grep UP || exit 1"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
     depends_on:
       eazybytes-rabbitmq:
         condition: service_healthy
@@ -127,6 +125,31 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: prod
       SPRING_APPLICATION_NAME: cards
+      CONFIG_SERVER_URL: http://eazybytes-config-server:8071/
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eazybytes-eurekaserver:8070/eureka/
+      SPRING_RABBITMQ_HOST: eazybytes-rabbitmq
+
+  eazybytes-gatewayserver:
+    image: "maleeshasa/eazybytes-gatewayserver:v4"
+    container_name: eazybytes-gatewayserver
+    ports:
+      - "8081:8081"
+    depends_on:
+      eazybytes-rabbitmq:
+        condition: service_healthy
+      eazybytes-eurekaserver:
+        condition: service_healthy
+      eazybytes-config-server:
+        condition: service_healthy
+      eazybytes-accounts:
+        condition: service_healthy
+      eazybytes-cards:
+        condition: service_healthy
+      eazybytes-loans:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: default
+      SPRING_APPLICATION_NAME: gatewayserver
       CONFIG_SERVER_URL: http://eazybytes-config-server:8071/
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eazybytes-eurekaserver:8070/eureka/
       SPRING_RABBITMQ_HOST: eazybytes-rabbitmq
