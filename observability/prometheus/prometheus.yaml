@@ -1,0 +1,31 @@
+global:
+  scrape_interval:     5s # Set the scrape interval to every 5 seconds. fetch metrics data by every 5 sec.
+  evaluation_interval: 5s # Evaluate rules every 5 seconds. re-evaluate metrics data by every 5 sec.
+
+scrape_configs:
+  - job_name: 'accounts'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: [ 'eazybytes-accounts:8080' ]
+  - job_name: 'loans'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: [ 'eazybytes-loans:9091' ]
+  - job_name: 'cards'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: [ 'eazybytes-cards:8090' ]   # 8090 from your compose ports
+  - job_name: 'gatewayserver'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: [ 'eazybytes-gatewayserver:8081' ]
+  - job_name: 'eurekaserver'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: [ 'eazybytes-eurekaserver:8070' ]
+  - job_name: 'configserver'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: [ 'eazybytes-config-server:8071' ]
+
+  
