@@ -13,9 +13,9 @@ services:
       - minio
     healthcheck:
       test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3100/ready || exit 1" ]
-      interval: 10s
+      interval: 20s
       timeout: 5s
-      retries: 5
+      retries: 20
     networks: &loki-dns
       eazybytes-network:
         aliases:
@@ -33,9 +33,9 @@ services:
       - ../observability/loki/loki-config.yaml:/etc/loki/config.yaml
     healthcheck:
       test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3100/ready || exit 1" ]
-      interval: 10s
+      interval: 20s
       timeout: 5s
-      retries: 5
+      retries: 20
     depends_on:
       - minio
     networks:
@@ -92,6 +92,18 @@ services:
     networks:
       - eazybytes-network
 
+  tempo:
+    image: grafana/tempo:2.6.1
+    container_name: tempo
+    command: -config.file /etc/tempo-config.yml
+    ports:
+      - "3110:3100"
+      - "4318:4318"
+    volumes:
+      - ../observability/tempo/tempo.yaml:/etc/tempo-config.yml
+    networks:
+      - eazybytes-network
+
   grafana:
     image: grafana/grafana:latest
     container_name: eazybytes-grafana
@@ -135,9 +147,9 @@ services:
       - "3000:3000"
     healthcheck:
       test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1" ]
-      interval: 10s
+      interval: 20s
       timeout: 5s
-      retries: 5
+      retries: 20
     networks:
       - eazybytes-network
 
@@ -219,9 +231,9 @@ services:
       - "3100:3100"
     healthcheck:
       test: ["CMD", "service", "nginx", "status"]
-      interval: 10s
+      interval: 20s
       timeout: 5s
-      retries: 5
+      retries: 20
     networks:
       - eazybytes-network
   
@@ -233,9 +245,9 @@ services:
       - "15672:15672"
     healthcheck:
       test: ["CMD", "rabbitmqctl", "status"]
-      interval: 10s
+      interval: 20s
       timeout: 5s
-      retries: 10
+      retries: 20
       start_period: 5s
     networks:
       - eazybytes-network
@@ -259,9 +271,9 @@ services:
       - "8071:8071"
     healthcheck:
       test: "curl --fail --silent localhost:8071/actuator/health/readiness | grep UP || exit 1"
-      interval: 10s
+      interval: 20s
       timeout: 5s
-      retries: 10
+      retries: 20
       start_period: 10s
     depends_on:
       eazybytes-rabbitmq:
@@ -270,6 +282,11 @@ services:
       SPRING_APPLICATION_NAME: configserver
       SPRING_RABBITMQ_HOST: eazybytes-rabbitmq
       SPRING_PROFILES_ACTIVE: default
+      JAVA_TOOL_OPTIONS: "-javaagent:/app/libs/opentelemetry-javaagent-2.11.0.jar"
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo:4318
+      OTEL_METRICS_EXPORTER: none
+      OTEL_LOGS_EXPORTER: none
+      OTEL_SERVICE_NAME: "configserver"
     networks:
       - eazybytes-network
 
@@ -280,9 +297,9 @@ services:
       - "8070:8070"
     healthcheck:
       test: "curl --fail --silent localhost:8070/actuator/health/readiness | grep UP || exit 1"
-      interval: 10s
+      interval: 20s
       timeout: 5s
-      retries: 10
+      retries: 20
       start_period: 10s
     depends_on:
       eazybytes-rabbitmq:
@@ -295,6 +312,11 @@ services:
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eazybytes-eurekaserver:8070/eureka/
       EUREKA_INSTANCE_HOSTNAME: eazybytes-eurekaserver
       SPRING_RABBITMQ_HOST: eazybytes-rabbitmq
+      JAVA_TOOL_OPTIONS: "-javaagent:/app/libs/opentelemetry-javaagent-2.11.0.jar"
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo:4318
+      OTEL_METRICS_EXPORTER: none
+      OTEL_LOGS_EXPORTER: none
+      OTEL_SERVICE_NAME: "eurekaserver"
     networks:
       - eazybytes-network
       
@@ -305,9 +327,9 @@ services:
       - "8080:8080"
     healthcheck:
       test: "curl --fail --silent localhost:8080/actuator/health/readiness | grep UP || exit 1"
-      interval: 10s
+      interval: 20s
       timeout: 5s
-      retries: 10
+      retries: 20
       start_period: 10s
     depends_on:
       eazybytes-rabbitmq:
@@ -322,6 +344,11 @@ services:
       CONFIG_SERVER_URL: http://eazybytes-config-server:8071/
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eazybytes-eurekaserver:8070/eureka/
       SPRING_RABBITMQ_HOST: eazybytes-rabbitmq
+      JAVA_TOOL_OPTIONS: "-javaagent:/app/libs/opentelemetry-javaagent-2.11.0.jar"
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo:4318
+      OTEL_METRICS_EXPORTER: none
+      OTEL_LOGS_EXPORTER: none
+      OTEL_SERVICE_NAME: "accounts"
     networks:
       - eazybytes-network
       
@@ -332,9 +359,9 @@ services:
       - "9091:9091"
     healthcheck:
       test: "curl --fail --silent localhost:9091/actuator/health/readiness | grep UP || exit 1"
-      interval: 10s
+      interval: 20s
       timeout: 5s
-      retries: 10
+      retries: 20
       start_period: 10s
     depends_on:
       eazybytes-rabbitmq:
@@ -349,6 +376,11 @@ services:
       CONFIG_SERVER_URL: http://eazybytes-config-server:8071/
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eazybytes-eurekaserver:8070/eureka/
       SPRING_RABBITMQ_HOST: eazybytes-rabbitmq
+      JAVA_TOOL_OPTIONS: "-javaagent:/app/libs/opentelemetry-javaagent-2.11.0.jar"
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo:4318
+      OTEL_METRICS_EXPORTER: none
+      OTEL_LOGS_EXPORTER: none
+      OTEL_SERVICE_NAME: "loans"
     networks:
       - eazybytes-network
 
@@ -359,9 +391,9 @@ services:
       - "8090:8090"
     healthcheck:
       test: "curl --fail --silent localhost:8090/actuator/health/readiness | grep UP || exit 1"
-      interval: 10s
+      interval: 20s
       timeout: 5s
-      retries: 10
+      retries: 20
       start_period: 10s
     depends_on:
       eazybytes-rabbitmq:
@@ -376,6 +408,11 @@ services:
       CONFIG_SERVER_URL: http://eazybytes-config-server:8071/
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eazybytes-eurekaserver:8070/eureka/
       SPRING_RABBITMQ_HOST: eazybytes-rabbitmq
+      JAVA_TOOL_OPTIONS: "-javaagent:/app/libs/opentelemetry-javaagent-2.11.0.jar"
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo:4318
+      OTEL_METRICS_EXPORTER: none
+      OTEL_LOGS_EXPORTER: none
+      OTEL_SERVICE_NAME: "cards"
     networks:
       - eazybytes-network
 
@@ -409,6 +446,11 @@ services:
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
       SPRING_DATA_REDIS_TIMEOUT: 1s
+      JAVA_TOOL_OPTIONS: "-javaagent:/app/libs/opentelemetry-javaagent-2.11.0.jar"
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo:4318
+      OTEL_METRICS_EXPORTER: none
+      OTEL_LOGS_EXPORTER: none
+      OTEL_SERVICE_NAME: "gatewayserver"
     networks:
       - eazybytes-network
     
