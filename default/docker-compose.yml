@@ -275,6 +275,19 @@ services:
       retries: 10
     networks:
       - eazybytes-network
+      
+  eazybytes-message:
+    image: "maleeshasa/eazybytes-message:s11"
+    container_name: eazybytes-message
+    ports:
+      - "8787:8080"
+    depends_on:
+      eazybytes-rabbitmq:
+        condition: service_healthy
+    environment:
+      SPRING_RABBITMQ_HOST: eazybytes-rabbitmq
+    networks:
+      - eazybytes-network
 
   eazybytes-config-server:
     image: "maleeshasa/eazybytes-configserver:s11"
